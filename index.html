@@ -10,7 +10,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-5 text-gray-800 font-sans">
 
@@ -44,7 +43,7 @@
         <div id="penaltyArea" class="hidden w-full mt-4">
             <h2 class="text-2xl font-bold text-red-600 mb-4 text-center">🚨 늙었어!! 형편없이 늙어버렸어!!</h2>
             <div class="aspect-w-16 aspect-h-9 relative" style="padding-bottom: 56.25%;">
-                <div id="youtubePlayer" class="absolute top-0 left-0 w-full h-full rounded-lg"></div>
+                <iframe id="youtubePlayer" class="absolute top-0 left-0 w-full h-full rounded-lg" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
             </div>
             <button onclick="location.reload()" class="w-full mt-6 bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg">다시 도전하기</button>
         </div>
@@ -68,22 +67,11 @@
         const TARGET_SQUATS = 5; 
         let lastSquatTime = 0; 
         let penaltyTriggered = false;
-        let ytPlayer;
 
-        // 🚨 중요: 여기에 형님이 찾으신 견훤 유튜브 영상의 ID를 넣으세요!
-        // 예: 주소가 https://www.youtube.com/watch?v=ABCDEFG 라면 'ABCDEFG'만 넣습니다.
-        const PENALTY_VIDEO_ID = "znDkW_8oZsI"; // 현재는 임시 영상(릭롤)입니다. 형님이 직접 갈아끼우십쇼!
+        // 🚨 형님이 주신 뼈 때리는 견훤 영상 ID
+        const PENALTY_VIDEO_ID = "znDkW_8oZsI"; 
 
-        // 유튜브 API 준비 함수
-        function onYouTubeIframeAPIReady() {
-            ytPlayer = new YT.Player('youtubePlayer', {
-                height: '360',
-                width: '640',
-                videoId: PENALTY_VIDEO_ID,
-                playerVars: { 'autoplay': 0, 'controls': 1 },
-            });
-        }
-
+        // 각도 계산 수학 공식
         function calculateAngle(a, b, c) {
             let radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
             let angle = Math.abs(radians * 180.0 / Math.PI);
@@ -91,18 +79,19 @@
             return angle;
         }
 
-        // 패널티 실행 함수: 유튜브 화면 띄우고 강제 재생!
+        // 🚨 패널티 실행 함수: 껍데기만 있던 아이프레임에 주소를 꽂아버림!
         function triggerPenalty() {
-            penaltyTriggered = true;
-            cameraArea.classList.add('hidden'); // 카메라 숨기기
-            penaltyArea.classList.remove('hidden'); // 유튜브 화면 등장
-            if(ytPlayer && ytPlayer.playVideo) {
-                ytPlayer.playVideo(); // 강제 재생!
-            }
+            penaltyTriggered = true; // 패널티 발동! (뼈대 그리기 중지)
+            cameraArea.classList.add('hidden'); // 카메라 화면 숨기기
+            penaltyArea.classList.remove('hidden'); // 패널티 화면 켜기
+            
+            // 주소 뒤에 ?autoplay=1 을 붙여서 로딩되자마자 강제 재생시킵니다.
+            document.getElementById('youtubePlayer').src = `https://www.youtube.com/embed/${PENALTY_VIDEO_ID}?autoplay=1&playsinline=1`;
         }
 
         function onResults(results) {
-            if(penaltyTriggered) return; // 패널티 걸리면 뼈대 계산 중지
+            // 패널티가 켜지면 AI 연산 멈춤 (폰 과부하 방지)
+            if(penaltyTriggered) return; 
 
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
@@ -131,16 +120,16 @@
                             countDisplay.innerText = count;
                             stateDisplay.innerText = "올라옴! 📈";
                             
-                            lastSquatTime = new Date().getTime(); // 시간 갱신
+                            lastSquatTime = new Date().getTime(); // 스쿼트 할 때마다 시간 갱신!
 
                             if (count >= TARGET_SQUATS) {
-                                alert("성공하셨습니다 형님! (여기서 보상 화면으로 넘어갑니다)");
+                                alert("성공하셨습니다 형님! (운동 완료 로직)");
                             }
                         }
                     }
                 }
                 
-                // 5초간 딴짓하면 견훤 소환!
+                // 🔥 패널티 발동 조건: 1개 이상 했고 & 목표개수 못 채웠는데 & 5초 넘게 멈춰있으면!
                 const currentTime = new Date().getTime();
                 if (currentTime - lastSquatTime > 5000 && count > 0 && count < TARGET_SQUATS) {
                     triggerPenalty();
@@ -149,11 +138,11 @@
             canvasCtx.restore();
         }
 
-        // 시작 버튼을 눌렀을 때 실행되는 함수
+        // 시작 버튼 누르면 실행
         function startApp() {
             startScreen.classList.add('hidden');
             appScreen.classList.remove('hidden');
-            lastSquatTime = new Date().getTime(); // 타이머 시작
+            lastSquatTime = new Date().getTime(); // 타이머 시작!
 
             const pose = new Pose({locateFile: (file) => {
                 return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
