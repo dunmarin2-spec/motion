@@ -3,89 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 모션 인식 테스트 - 졸라맨 스캐너</title>
+    <title>도파민 차단기 - 견훤의 분노</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
 </head>
-<body class="bg-gray-900 flex flex-col items-center justify-center min-h-screen p-5 text-white font-sans">
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-5 text-gray-800 font-sans">
 
-    <div class="max-w-2xl w-full bg-gray-800 rounded-xl shadow-2xl p-6 border-t-8 border-green-500">
-        <h1 class="text-3xl font-bold text-center mb-2 italic text-green-400">👁️ AI 모션 스캐너</h1>
-        <p class="text-center text-gray-400 mb-6 text-sm">"카메라 앞에서 움직여보십쇼. AI가 형님의 뼈대를 추적합니다."</p>
+    <div class="max-w-2xl w-full bg-white rounded-xl shadow-lg p-6 border-t-8 border-red-600" id="mainContainer">
+        
+        <div id="startScreen" class="text-center py-10">
+            <h1 class="text-3xl font-bold text-red-600 mb-4">🔒 유튜브 집중 모드</h1>
+            <p class="text-gray-600 mb-8">스쿼트 5개를 해야 잠금이 풀립니다.<br>중간에 포기하면 끔찍한 일이 발생합니다.</p>
+            <button onclick="startApp()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-10 rounded-full shadow-lg text-xl animate-pulse">
+                운동 시작하기 (클릭 필수)
+            </button>
+        </div>
 
-        <div class="relative flex justify-center bg-black rounded-lg overflow-hidden border-2 border-gray-700" style="min-height: 300px;">
-            
-            <video id="input_video" class="hidden" autoplay playsinline></video>
-            
-            <canvas id="output_canvas" class="w-full h-auto max-w-full" width="640" height="480"></canvas>
-            
-            <div id="loading" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-10 text-center p-4">
-                <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-500 mb-4"></div>
-                <p class="font-bold text-lg text-green-400">카메라를 켜는 중입니다... ⏳</p>
-                <p class="text-sm text-gray-300 mt-2">🚨 브라우저에서 <b class="text-white">"카메라 권한 허용"</b>을 반드시 눌러주십쇼!</p>
+        <div id="appScreen" class="hidden">
+            <div id="statusHeader" class="text-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">🔥 스쿼트 카운터</h2>
+                <p class="text-gray-500">움직임을 멈추면 안 됩니다!</p>
+            </div>
+
+            <div class="relative flex justify-center bg-gray-50 rounded-lg overflow-hidden border-2 border-gray-300" style="min-height: 400px;" id="cameraArea">
+                <video id="input_video" class="hidden" autoplay playsinline></video>
+                <canvas id="output_canvas" class="w-full h-auto max-w-full" width="640" height="480"></canvas>
+                
+                <div class="absolute top-4 left-4 bg-white/90 px-4 py-2 rounded-lg border border-gray-200 shadow">
+                    <p class="text-lg font-bold text-gray-800">개수: <span id="squatCount" class="text-3xl text-red-600">0</span> / 5</p>
+                    <p class="text-sm text-gray-500 mt-1">상태: <span id="squatState">대기중</span></p>
+                </div>
             </div>
         </div>
 
-        <p class="text-center text-xs text-gray-500 mt-4">
-            * 이 데이터는 서버로 1바이트도 전송되지 않으며, 형님의 스마트폰/PC 칩셋으로만 돌아갑니다. (서버비 0원)
-        </p>
+        <div id="penaltyArea" class="hidden w-full mt-4">
+            <h2 class="text-2xl font-bold text-red-600 mb-4 text-center">🚨 늙었어!! 형편없이 늙어버렸어!!</h2>
+            <div class="aspect-w-16 aspect-h-9 relative" style="padding-bottom: 56.25%;">
+                <div id="youtubePlayer" class="absolute top-0 left-0 w-full h-full rounded-lg"></div>
+            </div>
+            <button onclick="location.reload()" class="w-full mt-6 bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg">다시 도전하기</button>
+        </div>
+
     </div>
 
     <script>
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
-        const loadingIndicator = document.getElementById('loading');
+        
+        const countDisplay = document.getElementById('squatCount');
+        const stateDisplay = document.getElementById('squatState');
+        const startScreen = document.getElementById('startScreen');
+        const appScreen = document.getElementById('appScreen');
+        const cameraArea = document.getElementById('cameraArea');
+        const penaltyArea = document.getElementById('penaltyArea');
 
-        // AI가 화면을 보고 뼈대를 찾았을 때 실행되는 함수
+        let count = 0;
+        let state = "UP"; 
+        const TARGET_SQUATS = 5; 
+        let lastSquatTime = 0; 
+        let penaltyTriggered = false;
+        let ytPlayer;
+
+        // 🚨 중요: 여기에 형님이 찾으신 견훤 유튜브 영상의 ID를 넣으세요!
+        // 예: 주소가 https://www.youtube.com/watch?v=ABCDEFG 라면 'ABCDEFG'만 넣습니다.
+        const PENALTY_VIDEO_ID = "znDkW_8oZsI"; // 현재는 임시 영상(릭롤)입니다. 형님이 직접 갈아끼우십쇼!
+
+        // 유튜브 API 준비 함수
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('youtubePlayer', {
+                height: '360',
+                width: '640',
+                videoId: PENALTY_VIDEO_ID,
+                playerVars: { 'autoplay': 0, 'controls': 1 },
+            });
+        }
+
+        function calculateAngle(a, b, c) {
+            let radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+            let angle = Math.abs(radians * 180.0 / Math.PI);
+            if (angle > 180.0) angle = 360 - angle;
+            return angle;
+        }
+
+        // 패널티 실행 함수: 유튜브 화면 띄우고 강제 재생!
+        function triggerPenalty() {
+            penaltyTriggered = true;
+            cameraArea.classList.add('hidden'); // 카메라 숨기기
+            penaltyArea.classList.remove('hidden'); // 유튜브 화면 등장
+            if(ytPlayer && ytPlayer.playVideo) {
+                ytPlayer.playVideo(); // 강제 재생!
+            }
+        }
+
         function onResults(results) {
-            // 카메라가 켜지고 뼈대를 찾으면 로딩창 숨기기
-            loadingIndicator.style.display = 'none';
+            if(penaltyTriggered) return; // 패널티 걸리면 뼈대 계산 중지
 
-            // 캔버스 초기화 (이전 프레임 지우기)
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            
-            // 1. 카메라 원래 화면을 먼저 깔고
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
-            // 2. 그 위에 발견된 뼈대(랜드마크)를 빨간 점과 초록 선으로 그리기!
-            if (results.poseLandmarks) {
-                drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 4}); // 뼈대 선
-                drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#FF0000', lineWidth: 2, radius: 4}); // 관절 점
+            if (results.poseLandmarks && count < TARGET_SQUATS) {
+                drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 4});
+                drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#FF0000', lineWidth: 2, radius: 4});
+
+                const hip = results.poseLandmarks[23];
+                const knee = results.poseLandmarks[25];
+                const ankle = results.poseLandmarks[27];
+
+                if (hip.visibility > 0.5 && knee.visibility > 0.5 && ankle.visibility > 0.5) {
+                    const angle = calculateAngle(hip, knee, ankle);
+
+                    if (angle < 90) {
+                        if (state === "UP") {
+                            state = "DOWN";
+                            stateDisplay.innerText = "내려감! 📉";
+                        }
+                    } else if (angle > 150) {
+                        if (state === "DOWN") {
+                            state = "UP";
+                            count++; 
+                            countDisplay.innerText = count;
+                            stateDisplay.innerText = "올라옴! 📈";
+                            
+                            lastSquatTime = new Date().getTime(); // 시간 갱신
+
+                            if (count >= TARGET_SQUATS) {
+                                alert("성공하셨습니다 형님! (여기서 보상 화면으로 넘어갑니다)");
+                            }
+                        }
+                    }
+                }
+                
+                // 5초간 딴짓하면 견훤 소환!
+                const currentTime = new Date().getTime();
+                if (currentTime - lastSquatTime > 5000 && count > 0 && count < TARGET_SQUATS) {
+                    triggerPenalty();
+                }
             }
             canvasCtx.restore();
         }
 
-        // 구글 Pose(자세 인식) AI 모델 세팅
-        const pose = new Pose({locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-        }});
+        // 시작 버튼을 눌렀을 때 실행되는 함수
+        function startApp() {
+            startScreen.classList.add('hidden');
+            appScreen.classList.remove('hidden');
+            lastSquatTime = new Date().getTime(); // 타이머 시작
 
-        pose.setOptions({
-            modelComplexity: 1, // 0은 가볍고 빠름, 1은 중간, 2는 무겁고 정확
-            smoothLandmarks: true,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        });
+            const pose = new Pose({locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+            }});
+            pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+            pose.onResults(onResults);
 
-        pose.onResults(onResults);
-
-        // 카메라 켜기 및 영상 프레임을 AI에게 계속 넘겨주기
-        const camera = new Camera(videoElement, {
-            onFrame: async () => {
-                await pose.send({image: videoElement});
-            },
-            width: 640,
-            height: 480
-        });
-        
-        // 카메라 작동 시작!
-        camera.start();
+            const camera = new Camera(videoElement, {
+                onFrame: async () => { await pose.send({image: videoElement}); },
+                width: 640, height: 480
+            });
+            camera.start();
+        }
     </script>
 </body>
 </html>
