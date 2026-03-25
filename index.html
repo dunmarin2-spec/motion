@@ -3,15 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>도파민 차단기 - 견훤의 분노</title>
+    <title>🔒 도파민 차단기 - 견훤의 분노</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+    <style>
+        /* ☕ 최상단 계좌 바 스타일 */
+        #top-coffee-bar {
+            position: fixed; top: 0; left: 0; width: 100%; 
+            background: #ef4444; color: white; padding: 12px; 
+            text-align: center; font-weight: 800; z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer;
+        }
+        /* 🚀 최하단 쿠팡 배너 스타일 */
+        #bottom-ad-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: #ffffff; border-top: 2px solid #0073e9; 
+            padding: 10px; z-index: 1000; box-shadow: 0 -2px 15px rgba(0,0,0,0.1);
+        }
+        .cp-link { text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .cp-text { color: #333; font-size: 0.9rem; font-weight: bold; }
+        .cp-highlight { color: #0073e9; }
+        .cp-sub { font-size: 0.6rem; color: #999; text-align: center; margin-top: 4px; }
+        
+        body { padding-top: 60px; padding-bottom: 90px; }
+    </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-5 text-gray-800 font-sans">
+
+    <div id="top-coffee-bar" onclick="copyAccount()">
+        ☕ 형님, 덕분에 운동했습니다! 커피 선물하기 (클릭 복사)
+    </div>
 
     <div class="max-w-2xl w-full bg-white rounded-xl shadow-lg p-6 border-t-8 border-red-600" id="mainContainer">
         
@@ -47,10 +73,27 @@
             </div>
             <button onclick="location.reload()" class="w-full mt-6 bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg">다시 도전하기</button>
         </div>
+    </div>
 
+    <div id="bottom-ad-bar">
+        <a href="https://link.coupang.com/a/ea6Hec" target="_blank" class="cp-link">
+            <span class="text-2xl">📸</span>
+            <div class="cp-text">
+                인식률 실화? <span class="cp-highlight">스마트폰 삼각대</span> 하나로<br>전신 각도 완벽 고정 가즈아 👉
+            </div>
+        </a>
+        <div class="cp-sub">이 포스팅은 쿠팡 파트너스 활동의 일환으로 수수료를 제공받습니다.</div>
     </div>
 
     <script>
+        // ☕ 계좌번호 복사 함수
+        function copyAccount() {
+            const acc = "케이뱅크 100-210-317446";
+            navigator.clipboard.writeText(acc).then(() => {
+                alert("계좌번호 복사 완료! 형님, 커피 잘 마시겠습니다! ☕\n\n" + acc);
+            });
+        }
+
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
@@ -68,10 +111,8 @@
         let lastSquatTime = 0; 
         let penaltyTriggered = false;
 
-        // 🚨 형님이 주신 뼈 때리는 견훤 영상 ID
         const PENALTY_VIDEO_ID = "znDkW_8oZsI"; 
 
-        // 각도 계산 수학 공식
         function calculateAngle(a, b, c) {
             let radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
             let angle = Math.abs(radians * 180.0 / Math.PI);
@@ -79,18 +120,14 @@
             return angle;
         }
 
-        // 🚨 패널티 실행 함수: 껍데기만 있던 아이프레임에 주소를 꽂아버림!
         function triggerPenalty() {
-            penaltyTriggered = true; // 패널티 발동! (뼈대 그리기 중지)
-            cameraArea.classList.add('hidden'); // 카메라 화면 숨기기
-            penaltyArea.classList.remove('hidden'); // 패널티 화면 켜기
-            
-            // 주소 뒤에 ?autoplay=1 을 붙여서 로딩되자마자 강제 재생시킵니다.
+            penaltyTriggered = true;
+            cameraArea.classList.add('hidden');
+            penaltyArea.classList.remove('hidden');
             document.getElementById('youtubePlayer').src = `https://www.youtube.com/embed/${PENALTY_VIDEO_ID}?autoplay=1&playsinline=1`;
         }
 
         function onResults(results) {
-            // 패널티가 켜지면 AI 연산 멈춤 (폰 과부하 방지)
             if(penaltyTriggered) return; 
 
             canvasCtx.save();
@@ -119,17 +156,15 @@
                             count++; 
                             countDisplay.innerText = count;
                             stateDisplay.innerText = "올라옴! 📈";
-                            
-                            lastSquatTime = new Date().getTime(); // 스쿼트 할 때마다 시간 갱신!
+                            lastSquatTime = new Date().getTime();
 
                             if (count >= TARGET_SQUATS) {
-                                alert("성공하셨습니다 형님! (운동 완료 로직)");
+                                alert("미션 완료! 도파민을 즐기러 가십쇼 형님!");
                             }
                         }
                     }
                 }
                 
-                // 🔥 패널티 발동 조건: 1개 이상 했고 & 목표개수 못 채웠는데 & 5초 넘게 멈춰있으면!
                 const currentTime = new Date().getTime();
                 if (currentTime - lastSquatTime > 5000 && count > 0 && count < TARGET_SQUATS) {
                     triggerPenalty();
@@ -138,11 +173,10 @@
             canvasCtx.restore();
         }
 
-        // 시작 버튼 누르면 실행
         function startApp() {
             startScreen.classList.add('hidden');
             appScreen.classList.remove('hidden');
-            lastSquatTime = new Date().getTime(); // 타이머 시작!
+            lastSquatTime = new Date().getTime();
 
             const pose = new Pose({locateFile: (file) => {
                 return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
