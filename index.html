@@ -12,13 +12,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 
     <style>
-        /* ☕ 최상단 계좌 바 스타일 */
+        /* ☕ 최상단 카카오페이 송금 바 */
         #top-coffee-bar {
             position: fixed; top: 0; left: 0; width: 100%; 
-            background: #ef4444; color: white; padding: 12px; 
+            background: #fee500; color: #000; padding: 12px; 
             text-align: center; font-weight: 800; z-index: 1000;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer;
+            border-bottom: 2px solid #000;
         }
+        #top-coffee-bar:active { background: #fada0a; }
+
         /* 🚀 최하단 쿠팡 배너 스타일 */
         #bottom-ad-bar {
             position: fixed; bottom: 0; left: 0; width: 100%; 
@@ -30,13 +33,13 @@
         .cp-highlight { color: #0073e9; }
         .cp-sub { font-size: 0.6rem; color: #999; text-align: center; margin-top: 4px; }
         
-        body { padding-top: 60px; padding-bottom: 90px; }
+        body { padding-top: 70px; padding-bottom: 100px; }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-5 text-gray-800 font-sans">
 
-    <div id="top-coffee-bar" onclick="copyAccount()">
-        ☕ 형님, 덕분에 운동했습니다! 커피 선물하기 (클릭 복사)
+    <div id="top-coffee-bar" onclick="openKakaoPay()">
+        💛 형님, 운동하느라 고생하셨습니다! 커피 선물하기 (터치 시 송금)
     </div>
 
     <div class="max-w-2xl w-full bg-white rounded-xl shadow-lg p-6 border-t-8 border-red-600" id="mainContainer">
@@ -86,12 +89,9 @@
     </div>
 
     <script>
-        // ☕ 계좌번호 복사 함수
-        function copyAccount() {
-            const acc = "케이뱅크 100-210-317446";
-            navigator.clipboard.writeText(acc).then(() => {
-                alert("계좌번호 복사 완료! 형님, 커피 잘 마시겠습니다! ☕\n\n" + acc);
-            });
+        // 💛 카카오페이 송금 페이지 열기 함수
+        function openKakaoPay() {
+            window.open("https://qr.kakaopay.com/FRK8J0SAD", "_blank");
         }
 
         const videoElement = document.getElementById('input_video');
